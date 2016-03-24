@@ -1,0 +1,75 @@
+% author : Aina Linn Georges
+% date : 03/23/2016 
+% 
+% JILL (natural deduction) 
+
+
+% Defining propositions
+LF o : type =
+| top : o
+| one : o
+| zero : o
+| aAnd : o -> o -> o
+| aOr : o -> o -> o
+| mImp : o -> o -> o
+| mAnd : o -> o -> o
+| excl : o -> o
+| intr : o -> o
+; 
+
+% Defining equality for two propositions
+LF eq : o -> o -> type = 
+| eq_t : eq top top
+| eq_o : eq one one
+| eq_z : eq zero zero
+| eq_aAnd : eq A B -> eq C D -> eq (aAnd A C) (aAnd B D)
+| eq_aOr : eq A B -> eq C D -> eq (aOr A C) (aOr B D)
+| eq_mImp : eq A B -> eq C D -> eq (mImp A C) (mImp B D)
+| eq_mAnd : eq A B -> eq C D -> eq (mAnd A C) (mAnd B D)
+| eq_excl : eq A B -> eq (excl A ) (excl B)
+| eq_intr : eq A B -> eq (intr A) (intr B)
+;
+
+% Defining judgments 
+LF j : type = 
+| true : o -> j
+| poss : o -> j
+;
+
+% defining contexts
+LF linctx : type = 
+| empty : linctx
+| multiHyp : linctx -> o -> linctx -> linctx
+| mergedctx : linctx -> linctx -> linctx
+;
+
+
+% --------------------- JILL natural deduction ---------------------
+
+LF jillnd : linctx -> o -> type =
+| hyp : jillnd (multiHyp empty A empty) A
+| aAndI : jillnd G A -> jillnd G B -> jillnd G (aAnd A B)
+| aAndEl : jillnd G (aAnd A B) -> jillnd G A
+| aAndEr : jillnd G (aAnd A B) -> jillnd G B
+| aOrIl : jillnd G A -> jillnd G (aOr A B)
+| aOrIr : jillnd G B -> jillnd G (aOr A B)
+| mAndI : jillnd G A -> jillnd G' B -> jillnd (mergedctx G G') (mAnd A B)
+| mImpI : jillnd (multiHyp G A G') B -> jillnd (mergedctx G G') (mImp A B)
+| mImpE : jillnd G (mImp A B) -> jillnd G' A -> jillnd (mergedctx G G') B
+| oneI : jillnd empty one
+| topI : jillnd G top
+| exclI : jillnd empty A -> jillnd empty (excl A)
+| intrI : jillndj G (poss A) -> jillnd G (intr A)
+
+and jillndj : linctx -> j -> type =
+| aOrE : jillnd G (aOr A B) -> jillndj (multiHyp G' A G'') J -> jillndj (multiHyp G' B G'') J -> jillndj (mergedctx (mergedctx G G') G'') J
+| mAndE : jillnd G (mAnd A B) -> jillndj (multiHyp (multiHyp G' A G'') B G''') J -> jillndj (mergedctx (mergedctx (mergedctx G G') G'') G''') J
+| oneE : jillnd G one -> jillndj G' J -> jillndj (mergedctx G G') J
+| zeroE : jillnd G zero -> jillndj (mergedctx G G') J
+| possI : {A:o} jillndj G (true A) -> jillndj G (poss A)
+| exclE : jillnd G (excl A) -> (jillnd G' A -> jillndj G' J) -> jillndj (mergedctx G G') J
+| intrE : {C:o} jillnd G (intr A) -> jillndj (multiHyp empty A empty) (poss C) -> jillndj G (poss C)
+
+and jillhyp : linctx -> type = 
+| hypexcl : (jillhyp empty -> jillnd empty A) -> jillnd empty A
+;
