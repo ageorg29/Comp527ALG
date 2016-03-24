@@ -10,8 +10,8 @@ For reference here are the rules of JILL's natural deduction (I will write G for
 
 Judgmental Rules:
 
-													G ; D |- A true
-   ------------hyp		-------------hyp!		   -----------------poss
+.													G ; D |- A true
+   -------------hyp		-------------hyp!		   -----------------poss
 	G ; A |- A 			  G,A ; . |- A 				G ; D |- A poss 
 
 
