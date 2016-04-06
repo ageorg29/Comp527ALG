@@ -1,0 +1,76 @@
+% author : Aina Linn Georges
+% date : 04/06/2016 
+% 
+% JILL (natural deduction) 
+
+
+% Defining propositions
+LF o : type =
+| top : o
+| one : o
+| zero : o
+| aAnd : o -> o -> o
+| aOr : o -> o -> o
+| mImp : o -> o -> o
+| mAnd : o -> o -> o
+| excl : o -> o
+| intr : o -> o
+; 
+
+% Defining judgments 
+LF j : type = 
+| true : o -> j
+| poss : o -> j
+;
+
+% Defining assumptions
+LF asmp : o -> type = 
+| int_asmp : asmp A
+;
+
+% defining contexts
+LF linctx : type = 
+| empty : linctx
+| cons : linctx -> o -> linctx -> linctx
+;
+
+% defining merging
+LF merge : linctx -> linctx -> linctx -> type = 
+| e_m : merge empty C C
+| e_c : merge C1 C C' -> merge (cons C1 A C2) C (cons C' A C2)
+;
+
+% defining assumption add
+LF added : linctx -> o -> linctx -> type = 
+| e_a : added empty A (cons empty A empty)
+| c_a : added C A C' -> added (cons C B C'') A (cons C' B C'') 
+;
+
+
+% --------------------- JILL natural deduction ---------------------
+
+LF jillnd : linctx -> o -> type =
+| hyp : jillnd (cons empty A empty) A
+| hypexcl : asmp A -> jillnd empty A
+| aAndI : jillnd G A -> jillnd G B -> jillnd G (aAnd A B)
+| aAndEl : jillnd G (aAnd A B) -> jillnd G A
+| aAndEr : jillnd G (aAnd A B) -> jillnd G B
+| aOrIl : jillnd G A -> jillnd G (aOr A B)
+| aOrIr : jillnd G B -> jillnd G (aOr A B)
+| mAndI : jillnd G A -> jillnd G' B -> merge G G' G'' -> jillnd G'' (mAnd A B)
+| mImpI : jillnd (cons G A G') B -> merge G G' G'' -> jillnd G'' (mImp A B)
+| mImpE : jillnd G (mImp A B) -> jillnd G' A -> merge G G' G'' -> jillnd G'' B
+| oneI : jillnd empty one
+| topI : jillnd G top
+| exclI : jillnd empty A -> jillnd empty (excl A)
+| intrI : jillndj G (poss A) -> jillnd G (intr A)
+
+and jillndj : linctx -> j -> type =
+| aOrE : jillnd G (aOr A B) -> added G' A G1 -> added G' B G2 -> jillndj G1 J -> jillndj G2 J -> merge G G' G'' -> jillndj G'' J
+| mAndE : jillnd G (mAnd A B) -> added G' A G1 -> added G1 B G2 -> jillndj G2 J -> merge G G' G'' -> jillndj G'' J
+| oneE : jillnd G one -> jillndj G' J -> merge G G' G'' -> jillndj G'' J
+| zeroE : jillnd G zero -> merge G G' G'' -> jillndj G'' J
+| possI : {A:o} jillndj G (true A) -> jillndj G (poss A)
+| exclE : jillnd G (excl A) -> (jillnd empty A -> jillndj G' J) -> merge G G' G'' -> jillndj G'' J
+| intrE : {C:o} jillnd G (intr A) -> jillndj (cons empty A empty) (poss C) -> jillndj G (poss C)
+;
