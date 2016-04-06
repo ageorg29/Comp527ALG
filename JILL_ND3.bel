@@ -23,6 +23,12 @@ LF j : type =
 | poss : o -> j
 ;
 
+% Defining goal/poss
+LF g : type = 
+| goal : o -> g
+| poss_g : o -> g
+;
+
 % Defining assumptions
 LF asmp : o -> type = 
 | int_asmp : asmp A
@@ -71,6 +77,36 @@ and jillndj : linctx -> j -> type =
 | oneE : jillnd G one -> jillndj G' J -> merge G G' G'' -> jillndj G'' J
 | zeroE : jillnd G zero -> merge G G' G'' -> jillndj G'' J
 | possI : {A:o} jillndj G (true A) -> jillndj G (poss A)
-| exclE : jillnd G (excl A) -> (jillnd empty A -> jillndj G' J) -> merge G G' G'' -> jillndj G'' J
+| exclE : jillnd G (excl A) -> (asmp A -> jillndj G' J) -> merge G G' G'' -> jillndj G'' J
 | intrE : {C:o} jillnd G (intr A) -> jillndj (cons empty A empty) (poss C) -> jillndj G (poss C)
+;
+
+
+
+% --------------------- JILL sequent calculus ---------------------
+
+LF jillseq : linctx -> o -> type = 
+| copy : asmp A -> added G A G' -> jillseq G' A -> jillseq G A
+| mAndL : added G A G1 -> added G1 B G2 -> jillseq G2 C -> added G (mAnd A B) G' -> jillseq G' C
+| oneL : jillseq G A -> added G1 one G2 -> jillseq G2 A
+| mImpL : jillseqg G (goal A) -> added G' B G1 -> jillseq G1 C -> merge G G' G2 -> added G2 (mImp A B) G'' -> jillseq G'' C
+| aAndLl : added G A G' -> jillseq G' C -> added G (aAnd A B) G'' -> jillseq G'' C
+| aAndLr : added G B G' -> jillseq G' C -> added G (aAnd A B) G'' -> jillseq G'' C
+| zeroL : added G zero G' -> jillseq G' C
+| aOrL : added G A G1 -> added G B G2 -> jillseq G1 C -> jillseq G2 C -> added G (aOr A B) G' -> jillseq G' C
+| exclL : (asmp A -> jillseq G C) -> added G (excl A) G' -> jillseq G' C
+
+and jillseqg : linctx -> g -> type = 
+| init : jillseqg (cons empty A empty) (goal A)
+| promote : jillseqg G (goal A) -> jillseqg G (poss_g A)
+| mAndR : jillseqg G (goal A) -> jillseqg G' (goal B) -> merge G G' G'' -> jillseqg G'' (goal (mAnd A B)) 
+| oneR : jillseqg empty (goal one)
+| mImpR : added G A G' -> jillseqg G' (goal B) -> jillseqg G (goal (mImp A B))
+| aAndR : jillseqg G (goal A) -> jillseqg G (goal B) -> jillseqg G (goal (aAnd A B))
+| topR : jillseqg G (goal top)
+| aOrRl : jillseqg G (goal A) -> jillseqg G (goal (aOr A B))
+| aOrRl : jillseqg G (goal B) -> jillseqg G (goal (aOr A B))
+| exclR : jillseqg empty (goal A) -> jillseqg empty (goal (excl A))
+| intrL : jillseqg (cons empty A empty) (poss_g C) -> jillseqg (cons empty (intr A) empty) (poss_g C)
+| intrR : jillseqg G (poss_g A) -> jillseqg G (goal (intr A))
 ;
