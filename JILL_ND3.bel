@@ -29,7 +29,7 @@ LF g : type =
 | poss_g : o -> g
 ;
 
-% Defining assumptions
+% Defining (intuitionistic) assumptions
 LF asmp : o -> type = 
 | int_asmp : asmp A
 ;
@@ -43,13 +43,15 @@ LF linctx : type =
 % defining merging
 LF merge : linctx -> linctx -> linctx -> type = 
 | e_m : merge empty C C
-| e_c : merge C1 C C' -> merge (cons C1 A C2) C (cons C' A C2)
+| e_cl : merge C1 C C' -> merge (cons C1 A C2) C (cons C' A C2)
+| e_cr : merge C1 C C' -> merge (cons C2 A C1) C (cons C2 A C')
 ;
 
 % defining assumption add
 LF added : linctx -> o -> linctx -> type = 
 | e_a : added empty A (cons empty A empty)
-| c_a : added C A C' -> added (cons C B C'') A (cons C' B C'') 
+| c_al : added C A C' -> added (cons C B C'') A (cons C' B C'')
+| c_ar : added C A C' -> added (cons C'' B C) A (cons C'' B C')
 ;
 
 
@@ -109,4 +111,62 @@ and jillseqg : linctx -> g -> type =
 | exclR : jillseqg empty (goal A) -> jillseqg empty (goal (excl A))
 | intrL : jillseqg (cons empty A empty) (poss_g C) -> jillseqg (cons empty (intr A) empty) (poss_g C)
 | intrR : jillseqg G (poss_g A) -> jillseqg G (goal (intr A))
+| transG : jillseqg G (goal A) -> jillseq G A 				
+| transP : jillseqg G (poss_g A) -> jillseq G A
 ;
+
+
+% --------------------- Substitution Principles ------------------------
+
+% (1) If G ; D |- A poss and G ; A true |- C poss, then G ; D |- C poss
+% (2) If G ; D |- A true and G ; D', A true |- J, then G ; D, D' |- J
+% (3) If G ; . |- A true and G, A valid ; D |- J, then G ; D |- J
+
+% Defining intuitionistic context
+schema ctx = some [a:o] block x:asmp a;
+
+% Defining substitution
+% LF subst : o -> o -> o -> o -> type = 
+% |
+
+% (1)
+rec s1 : (gamma:ctx) [gamma |- jillndj D (poss A)] -> [gamma |- jillndj (cons empty A empty) (poss C)] -> [gamma |- jillndj D (poss C)] = ? ;
+
+% (2)
+% rec s2 : (gamma:ctx) [gamma |- jillndj D (true A)] -> added D1 A D' -> [gamma |- jillndj D' J] -> merge D D' D'' -> [gamma |- jillndj D'' J] = ? ;
+% Is there a way to express added and gamma outside s2 definition?
+
+% (3)
+% rec s3 : (gamma:ctx) [gamma |- jillndj empty (true A)] -> [gamma |- jillndj D J] -> [gamma |- jillndj D J] = ? ;
+% to describe s3 I need to find the syntax for adding an element to a ctx
+
+
+% ---------------------------- Completeness (nd with regards to sq) ---------------------------
+
+% rec complete : (gamma:ctx) [gamma |- jillseqg G J] -> [gamma |- jillnd G A] = 
+% fn d => case d of 
+% 	| [gamma |- init] =>
+% 		[gamma |- hyp]
+% ;
+
+
+
+% -------------------------- Soundness (nd with regards to sq) --------------------------------
+
+
+% rec sound1' : (gamma:ctx) [gamma |- jillnd G A] -> [gamma |- jillseq G A] = 
+% fn d => case d of
+% | [gamma |- aAndEl (jillnd G' (aAnd A1 A2))] =>
+%  let [gamma |- jillseq (cons G1 A1 empty) C] = sound1' [gamma |- jillnd G' (aAnd A1 A2)] in
+%    [gamma |- aAndLl (added G1 A1 (cons G1 A1 empty)) (jillseq (cons G1 A1 empty) C) (added G1 (aAnd A1 A2) (cons G1 (aAnd A1 A2) empty))]
+
+% and sound1 : (gamma:ctx) [gamma |- jillnd G A] -> [gamma |- jillseqg G J] = 
+% fn d => case d of
+% | [gamma |- aAndI (jillnd G' A1) (jillnd G' A2)] =>
+%  let [gamma |- (jillseqg G' (goal A1))] = sound1 [gamma |- jillnd G' A1] in 
+%  let [gamma |- (jillseqg G' (goal A2))] = sound1 [gamma |- jillnd G' A2] in 
+%    [gamma |- aAndR (jillseqg G' (goal A1)) (jillseqg G' (goal A2))]
+% ;
+
+
+
