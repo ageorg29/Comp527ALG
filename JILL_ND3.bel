@@ -30,8 +30,8 @@ LF g : type =
 ;
 
 % Defining (intuitionistic) assumptions
-LF asmp : o -> type = 
-| int_asmp : asmp A
+LF valid : o -> type = 
+| int_asmp : valid A
 ;
 
 % defining contexts
@@ -57,116 +57,56 @@ LF added : linctx -> o -> linctx -> type =
 
 % --------------------- JILL natural deduction ---------------------
 
-LF jillnd : linctx -> o -> type =
-| hyp : jillnd (cons empty A empty) A
-| hypexcl : asmp A -> jillnd empty A
-| aAndI : jillnd G A -> jillnd G B -> jillnd G (aAnd A B)
-| aAndEl : jillnd G (aAnd A B) -> jillnd G A
-| aAndEr : jillnd G (aAnd A B) -> jillnd G B
-| aOrIl : jillnd G A -> jillnd G (aOr A B)
-| aOrIr : jillnd G B -> jillnd G (aOr A B)
-| mAndI : jillnd G A -> jillnd G' B -> merge G G' G'' -> jillnd G'' (mAnd A B)
-| mImpI : jillnd (cons G A G') B -> merge G G' G'' -> jillnd G'' (mImp A B)
-| mImpE : jillnd G (mImp A B) -> jillnd G' A -> merge G G' G'' -> jillnd G'' B
-| oneI : jillnd empty one
-| topI : jillnd G top
-| exclI : jillnd empty A -> jillnd empty (excl A)
-| intrI : jillndj G (poss A) -> jillnd G (intr A)
-
-and jillndj : linctx -> j -> type =
-| aOrE : jillnd G (aOr A B) -> added G' A G1 -> added G' B G2 -> jillndj G1 J -> jillndj G2 J -> merge G G' G'' -> jillndj G'' J
-| mAndE : jillnd G (mAnd A B) -> added G' A G1 -> added G1 B G2 -> jillndj G2 J -> merge G G' G'' -> jillndj G'' J
-| oneE : jillnd G one -> jillndj G' J -> merge G G' G'' -> jillndj G'' J
-| zeroE : jillnd G zero -> merge G G' G'' -> jillndj G'' J
-| possI : {A:o} jillndj G (true A) -> jillndj G (poss A)
-| exclE : jillnd G (excl A) -> (asmp A -> jillndj G' J) -> merge G G' G'' -> jillndj G'' J
-| intrE : {C:o} jillnd G (intr A) -> jillndj (cons empty A empty) (poss C) -> jillndj G (poss C)
+LF jillnd : linctx -> j -> type =
+| hyp : jillnd (cons empty A empty) (true A)
+| hypexcl : valid A -> jillnd empty (true A)
+| aAndI : jillnd G (true A) -> jillnd G (true B) -> jillnd G (true (aAnd A B))
+| aAndEl : jillnd G (true (aAnd A B)) -> jillnd G (true A)
+| aAndEr : jillnd G (true (aAnd A B)) -> jillnd G (true B)
+| aOrIl : jillnd G (true A) -> jillnd G (true (aOr A B))
+| aOrIr : jillnd G (true B) -> jillnd G (true (aOr A B))
+| mAndI : jillnd G (true A) -> jillnd G' (true B) -> merge G G' G'' -> jillnd G'' (true (mAnd A B))
+| mImpI : jillnd (cons G A G') (true B) -> merge G G' G'' -> jillnd G'' (true (mImp A B))
+| mImpE : jillnd G (true (mImp A B)) -> jillnd G' (true A) -> merge G G' G'' -> jillnd G'' (true B)
+| oneI : jillnd empty (true one)
+| topI : jillnd G (true top)
+| exclI : jillnd empty (true A) -> jillnd empty (true (excl A))
+| intrI : jillnd G (poss A) -> jillnd G (true (intr A))
+| aOrE : jillnd G (true (aOr A B)) -> added G' A G1 -> added G' B G2 -> jillnd G1 J -> jillnd G2 J -> merge G G' G'' -> jillnd G'' J
+| mAndE : jillnd G (true (mAnd A B)) -> added G' A G1 -> added G1 B G2 -> jillnd G2 J -> merge G G' G'' -> jillnd G'' J
+| oneE : jillnd G (true one) -> jillnd G' J -> merge G G' G'' -> jillnd G'' J
+| zeroE : jillnd G (true zero) -> merge G G' G'' -> jillnd G'' J
+| possI : {A:o} jillnd G (true A) -> jillnd G (poss A)
+| exclE : jillnd G (true (excl A)) -> (valid A -> jillnd G' J) -> merge G G' G'' -> jillnd G'' J
+| intrE : {C:o} jillnd G (true (intr A)) -> jillnd (cons empty A empty) (poss C) -> jillnd G (poss C)
 ;
 
 
 
 % --------------------- JILL sequent calculus ---------------------
 
-LF jillseq : linctx -> o -> type = 
-| copy : asmp A -> added G A G' -> jillseq G' A -> jillseq G A
+LF jillseq : linctx -> g -> type = 
+| copy : valid A -> added G A G' -> jillseq G' C -> jillseq G C
 | mAndL : added G A G1 -> added G1 B G2 -> jillseq G2 C -> added G (mAnd A B) G' -> jillseq G' C
-| oneL : jillseq G A -> added G1 one G2 -> jillseq G2 A
-| mImpL : jillseqg G (goal A) -> added G' B G1 -> jillseq G1 C -> merge G G' G2 -> added G2 (mImp A B) G'' -> jillseq G'' C
+| oneL : jillseq G C -> added G1 one G2 -> jillseq G2 C
+| mImpL : jillseq G (goal A) -> added G' B G1 -> jillseq G1 C -> merge G G' G2 -> added G2 (mImp A B) G'' -> jillseq G'' C
 | aAndLl : added G A G' -> jillseq G' C -> added G (aAnd A B) G'' -> jillseq G'' C
 | aAndLr : added G B G' -> jillseq G' C -> added G (aAnd A B) G'' -> jillseq G'' C
 | zeroL : added G zero G' -> jillseq G' C
 | aOrL : added G A G1 -> added G B G2 -> jillseq G1 C -> jillseq G2 C -> added G (aOr A B) G' -> jillseq G' C
-| exclL : (asmp A -> jillseq G C) -> added G (excl A) G' -> jillseq G' C
-
-and jillseqg : linctx -> g -> type = 
-| init : jillseqg (cons empty A empty) (goal A)
-| promote : jillseqg G (goal A) -> jillseqg G (poss_g A)
-| mAndR : jillseqg G (goal A) -> jillseqg G' (goal B) -> merge G G' G'' -> jillseqg G'' (goal (mAnd A B)) 
-| oneR : jillseqg empty (goal one)
-| mImpR : added G A G' -> jillseqg G' (goal B) -> jillseqg G (goal (mImp A B))
-| aAndR : jillseqg G (goal A) -> jillseqg G (goal B) -> jillseqg G (goal (aAnd A B))
-| topR : jillseqg G (goal top)
-| aOrRl : jillseqg G (goal A) -> jillseqg G (goal (aOr A B))
-| aOrRl : jillseqg G (goal B) -> jillseqg G (goal (aOr A B))
-| exclR : jillseqg empty (goal A) -> jillseqg empty (goal (excl A))
-| intrL : jillseqg (cons empty A empty) (poss_g C) -> jillseqg (cons empty (intr A) empty) (poss_g C)
-| intrR : jillseqg G (poss_g A) -> jillseqg G (goal (intr A))
-| transG : jillseqg G (goal A) -> jillseq G A 				
-| transP : jillseqg G (poss_g A) -> jillseq G A
+| exclL : (valid A -> jillseq G C) -> added G (excl A) G' -> jillseq G' C
+| init : jillseq (cons empty A empty) (goal A)
+| promote : jillseq G (goal A) -> jillseq G (poss_g A)
+| mAndR : jillseq G (goal A) -> jillseq G' (goal B) -> merge G G' G'' -> jillseq G'' (goal (mAnd A B))
+| oneR : jillseq empty (goal one)
+| mImpR : added G A G' -> jillseq G' (goal B) -> jillseq G (goal (mImp A B))
+| aAndR : jillseq G (goal A) -> jillseq G (goal B) -> jillseq G (goal (aAnd A B))
+| topR : jillseq G (goal top)
+| aOrRl : jillseq G (goal A) -> jillseq G (goal (aOr A B))
+| aOrRl : jillseq G (goal B) -> jillseq G (goal (aOr A B))
+| exclR : jillseq empty (goal A) -> jillseq empty (goal (excl A))
+| intrL : jillseq (cons empty A empty) (poss_g C) -> jillseq (cons empty (intr A) empty) (poss_g C)
+| intrR : jillseq G (poss_g A) -> jillseq G (goal (intr A))
+| transG : jillseq G (goal A) -> jillseq G (goal A) 				
+| transP : jillseq G (poss_g A) -> jillseq G (goal A)
 ;
-
-
-% --------------------- Substitution Principles ------------------------
-
-% (1) If G ; D |- A poss and G ; A true |- C poss, then G ; D |- C poss
-% (2) If G ; D |- A true and G ; D', A true |- J, then G ; D, D' |- J
-% (3) If G ; . |- A true and G, A valid ; D |- J, then G ; D |- J
-
-% Defining intuitionistic context
-schema ctx = some [a:o] block x:asmp a;
-
-% Defining substitution
-% LF subst : o -> o -> o -> o -> type = 
-% |
-
-% (1)
-rec s1 : (gamma:ctx) [gamma |- jillndj D (poss A)] -> [gamma |- jillndj (cons empty A empty) (poss C)] -> [gamma |- jillndj D (poss C)] = ? ;
-
-% (2)
-% rec s2 : (gamma:ctx) [gamma |- jillndj D (true A)] -> added D1 A D' -> [gamma |- jillndj D' J] -> merge D D' D'' -> [gamma |- jillndj D'' J] = ? ;
-% Is there a way to express added and gamma outside s2 definition?
-
-% (3)
-% rec s3 : (gamma:ctx) [gamma |- jillndj empty (true A)] -> [gamma |- jillndj D J] -> [gamma |- jillndj D J] = ? ;
-% to describe s3 I need to find the syntax for adding an element to a ctx
-
-
-% ---------------------------- Completeness (nd with regards to sq) ---------------------------
-
-% rec complete : (gamma:ctx) [gamma |- jillseqg G J] -> [gamma |- jillnd G A] = 
-% fn d => case d of 
-% 	| [gamma |- init] =>
-% 		[gamma |- hyp]
-% ;
-
-
-
-% -------------------------- Soundness (nd with regards to sq) --------------------------------
-
-
-% rec sound1' : (gamma:ctx) [gamma |- jillnd G A] -> [gamma |- jillseq G A] = 
-% fn d => case d of
-% | [gamma |- aAndEl (jillnd G' (aAnd A1 A2))] =>
-%  let [gamma |- jillseq (cons G1 A1 empty) C] = sound1' [gamma |- jillnd G' (aAnd A1 A2)] in
-%    [gamma |- aAndLl (added G1 A1 (cons G1 A1 empty)) (jillseq (cons G1 A1 empty) C) (added G1 (aAnd A1 A2) (cons G1 (aAnd A1 A2) empty))]
-
-% and sound1 : (gamma:ctx) [gamma |- jillnd G A] -> [gamma |- jillseqg G J] = 
-% fn d => case d of
-% | [gamma |- aAndI (jillnd G' A1) (jillnd G' A2)] =>
-%  let [gamma |- (jillseqg G' (goal A1))] = sound1 [gamma |- jillnd G' A1] in 
-%  let [gamma |- (jillseqg G' (goal A2))] = sound1 [gamma |- jillnd G' A2] in 
-%    [gamma |- aAndR (jillseqg G' (goal A1)) (jillseqg G' (goal A2))]
-% ;
-
-
-
